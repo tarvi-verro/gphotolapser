@@ -1,0 +1,43 @@
+gphotolapser
+============
+
+This is a project to shoot long (24h+) nature timelapses using DSLR cameras
+controlled over USB using gphoto2. Features that this codebase provides
+include:
+
+ - downloads the images after taking them
+ - camera exposure, ISO speed and aperture based on scene brightness
+ - uses gphoto2, so it should be easily portable to different cameras
+
+
+Setup
+=====
+
+Note that the setup to shoot long timelapses in remote locations can get heavy
+as you need to provide power for your equipment.
+
+To get you started, here's the outline of one simple setup:
+
+ - get a Raspberry Pi, preferrably a Zero
+ - acquire a rather capacious USB battery bank (20Ah)
+ - make sure your camera has some kind of a lasting power solution like a
+   battery grip
+ - figure out some kind of heating or other solution to inhibit water from
+   condensing on your camera's lens
+ - configure the RPi to automatically connect to your phone's Wi-Fi hotspot,
+   with a static IP if possible (some phones also show the IP-s of connected
+   devices)
+ - make sure you can login with SSH over your phone's Wi-Fi, important for
+   debugging (looking at the images as they come in and so forth)
+ - set up this software on your RPi, preferrably with an udev rule that starts
+   it when camera is connected
+
+Finally, in the nature the steps to activate everything should boil down to:
+
+ - connect power to RPi
+ - start up camera, set it in focus and set the focus to manual
+ - connect your RPi to your camera with a USB cable, after a while the series
+   should start
+ - monitor the setup listening for clicking sounds, you can also fetch a latest
+   image to make sure everything's OK
+
