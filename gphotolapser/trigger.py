@@ -2,6 +2,8 @@
 # coding=UTF-8
 
 from datetime import datetime
+from sys import argv
+from os.path import isfile
 import signal
 from time import sleep
 from gph import gph_shoot, gph_open, gph_close, gph_cmd
@@ -11,6 +13,22 @@ from luminance import luminance_settings_get, luminance_calculate, luminance_est
 from luminance_calculate import luminance_calculate
 from configs import cfgs, infs, cfg_load
 from monotonic_time import monotonic_time, monotonic_alarm
+
+cfgfile='timelapse.conf'
+
+def usage():
+    print('Usage: %s [(conf file)]' % argv[0])
+
+if len(argv) == 2:
+    if not isfile(argv[1]):
+        print("Argument not a configuration file.")
+        usage()
+        exit(1)
+    cfgfile=argv[1]
+elif len(argv) > 2:
+    print('Invalid arguments.')
+    usage()
+    exit(1)
 
 daemon_alive = True
 
@@ -61,7 +79,7 @@ cycle_reftime = monotonic_time()
 
 def sighup_handler(signum, frame):
     cv = cfgs['cycle']
-    cfg_load()
+    cfg_load(cfgfile)
     if cv != cfgs['cycle']:
         print('Cycle length changed, updating reftime.')
         cycle_reftime = monotonic_time()
@@ -70,7 +88,7 @@ def sighup_handler(signum, frame):
 # Reload conf signal
 signal.signal(signal.SIGHUP, sighup_handler)
 
-cfg_load()
+cfg_load(cfgfile)
 
 print(cfgs)
 

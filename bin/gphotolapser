@@ -1,0 +1,9 @@
+#!/usr/bin/python2
+#
+# On a RPi Zero this approach saves about 3.5 seconds startup time compared to
+# the setuptools entry_points = {'console_scripts':[...]}
+#
+
+from runpy import run_module
+
+run_module('gphotolapser.trigger')

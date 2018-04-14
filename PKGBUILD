@@ -1,7 +1,7 @@
 
 # Maintainer: Your Name <youremail@domain.com>
 pkgname=gphotolapser
-pkgver=0.8
+pkgver=0.9
 pkgrel=1
 epoch=
 pkgdesc="Record a timelapse with a DSLR."
@@ -14,7 +14,8 @@ source=('setup.py')
 md5sums=('SKIP')
 
 prepare() {
-	ln -s ../gphotolapser
+	ln -fs ../gphotolapser
+	ln -fs ../bin
 }
 
 package() {
