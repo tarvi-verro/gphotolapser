@@ -4,7 +4,7 @@
 from __future__ import print_function
 import sys
 from os import listdir
-from os.path import isfile, join, getmtime
+from os.path import isfile, join, getctime
 import time
 import pyexiv2
 import ctypes
@@ -71,13 +71,11 @@ def luminance_calculate(imgd):
     for i in ls:
         f = join(imgd, i)
 
-        if getmtime(f) < tc:
+        if getctime(f) < tc:
             continue
 
         if not isfile(f) or i[-3:] != 'JPG' and i[-3:] != 'CR2':
             continue
-
-        #print('{} vs {}'.format(getmtime(f), tc))
 
         try:
             (settings_equivelant, hist_corrected, measured_ev, measured_ev2, histmid) = luminance_from_img(f)
