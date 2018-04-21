@@ -133,7 +133,7 @@ def gph_cmd(cmd, timeout=2):
             if answ_chk < 0:
                 answ_chk = 0
             r=read(gph.stdout.fileno(), 4192)
-            _debug_write(answ)
+            _debug_write(r)
             answ+=r
         except OSError:
             t_now = time()

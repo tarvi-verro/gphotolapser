@@ -1,7 +1,7 @@
 
 # Maintainer: Your Name <youremail@domain.com>
 pkgname=gphotolapser
-pkgver=0.11
+pkgver=0.11.1
 pkgrel=1
 epoch=
 pkgdesc="Record a timelapse with a DSLR."

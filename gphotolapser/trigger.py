@@ -139,8 +139,8 @@ while daemon_alive:
             gph_cmd('set-config /main/actions/bulb=1')
             monotonic_alarm(t + t_bulb)
             gph_cmd('set-config /main/actions/bulb=0')
-            gph_cmd('wait-event-and-download %is' % (ceil(sh) + 3),
-                    timeout=(ceil(sh) + 3.5)) # Should download the image
+            gph_cmd('wait-event-and-download %is' % 3,
+                    timeout=(3.5)) # Should download the image
         else:
             gph_cmd('capture-image-and-download', timeout=(ceil(sh) + 5.0))
 
