@@ -21,3 +21,43 @@ def camera_setting_convert(choice):
         return float(s)
     return float(frac[0])/float(frac[1])
 
+_handler_canon_eos_40d = type("CameraHandler40D", (object,), {
+    'bulb_begin': 'set-config /main/actions/bulb=1',
+    'bulb_end': 'set-config /main/actions/bulb=0'
+    })
+
+_handler_canon_eos_550d = type("CameraHandler550D", (object,), {
+    'bulb_begin': 'set-config-index /main/actions/eosremoterelease=2',
+    'bulb_end': 'set-config-index /main/actions/eosremoterelease=4'
+    })
+
+_handlers = {
+        'Canon EOS 550D': _handler_canon_eos_550d,
+        'Canon EOS 40D': _handler_canon_eos_40d
+        }
+
+def camera_handler_get(cameramodel):
+    try:
+        return _handlers[cameramodel]
+    except KeyError:
+        pass
+
+    print("Warning: your specific model %s hasn't been tested." % cameramodel)
+    ms = cameramodel.split(' ')
+    print(ms)
+
+    if len(ms) == 3 and ms[0] == 'Canon' and ms[1] == 'EOS' and ms[-1][-1] == 'D':
+        try:
+            n = int(ms[2][:-1])
+            if n < 100 and n >= 10:
+                print('Guessing Canon EOS 40D style commands..')
+                return _handler_canon_eos_40d
+            if n < 1000 and n >= 100:
+                print('Guessing Canon EOS 550D style commands..')
+                return _handler_canon_eos_550d
+        except ValueError:
+            pass
+
+    print('No smart guess, using Canon EOS 40D style commands..')
+    return _handler_canon_eos_40d
+

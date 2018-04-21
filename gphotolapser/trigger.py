@@ -8,7 +8,7 @@ import signal
 from time import sleep
 from gph import gph_shoot, gph_open, gph_close, gph_cmd, gph_debug_set
 from math import pi, ceil
-from camera import camera_settings_get
+from camera import camera_settings_get, camera_handler_get
 from luminance import luminance_settings_get, luminance_calculate, luminance_estimate, luminance_settings_get_bulb
 from luminance_calculate import luminance_calculate
 from configs import cfgs, infs, cfg_load
@@ -45,7 +45,9 @@ if len(model) == 0:
     sleep(0.1)
     model=gph_cmd('get-config /main/status/cameramodel')
 
-print(model[2])
+cameramodel = model[3].split(' ', 1)[1]
+print('Camera: ' + cameramodel)
+camera = camera_handler_get(cameramodel)
 
 # Configure camera
 gph_cmd('set-config-index /main/settings/capturetarget=1')
@@ -125,24 +127,17 @@ while daemon_alive:
     sh=shutter[t_shutter]
 
     monotonic_alarm(t + remain)
-    if False:
-        gph_cmd('set-config-index /main/actions/eosremoterelease=2') # Press Full
-        sleep(0.2)
-        gph_cmd('set-config-index /main/actions/eosremoterelease=4') # Release Full
 
-        gph_cmd('wait-event-and-download %is' % (ceil(sh) + 3),
-                timeout=(ceil(sh) + 3.5)) # Should download the image
+    if t_bulb > 5.0:
+        gph_cmd('set-config-index /main/capturesettings/shutterspeed=0') # Bulb
+        t = monotonic_time()
+        gph_cmd(camera.bulb_begin)
+        monotonic_alarm(t + t_bulb)
+        gph_cmd(camera.bulb_end)
+        gph_cmd('wait-event-and-download %is' % 3,
+                timeout=(3.5)) # Should download the image
     else:
-        if t_bulb > 5.0:
-            gph_cmd('set-config-index /main/capturesettings/shutterspeed=0') # Bulb
-            t = monotonic_time()
-            gph_cmd('set-config /main/actions/bulb=1')
-            monotonic_alarm(t + t_bulb)
-            gph_cmd('set-config /main/actions/bulb=0')
-            gph_cmd('wait-event-and-download %is' % 3,
-                    timeout=(3.5)) # Should download the image
-        else:
-            gph_cmd('capture-image-and-download', timeout=(ceil(sh) + 5.0))
+        gph_cmd('capture-image-and-download', timeout=(ceil(sh) + 5.0))
 
 # Our job here is done
 gph_close()
