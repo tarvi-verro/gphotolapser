@@ -103,7 +103,7 @@ while daemon_alive:
     ref_delta = (t - cycle_reftime) % cfgs['cycle']
     remain = cfgs['cycle'] - ref_delta
 
-    lumi_est=luminance_calculate('/srv/camera')
+    lumi_est=luminance_calculate('./')
 
     (t_aperture, t_iso, t_shutter) = luminance_settings_get(lumi_est, aperture,
             iso, shutter, iso_max=cfgs['iso_max'], shutter_max=cfgs['shutter_max'],
