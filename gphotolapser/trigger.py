@@ -82,7 +82,7 @@ def sighup_handler(signum, frame):
     cv = cfgs['cycle']
 
     args.cfgfile.seek(0)
-    cfg_load(args.cfgfile)
+    cfg_load(fp=args.cfgfile)
 
     if cv != cfgs['cycle']:
         print('Cycle length changed, updating reftime.')
@@ -93,7 +93,7 @@ def sighup_handler(signum, frame):
 signal.signal(signal.SIGHUP, sighup_handler)
 
 if args.cfgfile:
-    cfg_load(args.cfgfile)
+    cfg_load(fp=args.cfgfile)
 
 print(cfgs)
 
