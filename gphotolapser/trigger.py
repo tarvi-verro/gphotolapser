@@ -6,33 +6,31 @@ from sys import argv
 from os.path import isfile
 import signal
 from time import sleep
-from gph import gph_shoot, gph_open, gph_close, gph_cmd
+from gph import gph_shoot, gph_open, gph_close, gph_cmd, gph_debug_set
 from math import pi, ceil
 from camera import camera_settings_get
 from luminance import luminance_settings_get, luminance_calculate, luminance_estimate, luminance_settings_get_bulb
 from luminance_calculate import luminance_calculate
 from configs import cfgs, infs, cfg_load
 from monotonic_time import monotonic_time, monotonic_alarm
+import argparse
 
-cfgfile='timelapse.conf'
+parser = argparse.ArgumentParser(description=('Start a timelapse with a '
+    + 'connected camera.'))
 
-def usage():
-    print('Usage: %s [(conf file)]' % argv[0])
-
-if len(argv) == 2:
-    if not isfile(argv[1]):
-        print("Argument not a configuration file.")
-        usage()
-        exit(1)
-    cfgfile=argv[1]
-elif len(argv) > 2:
-    print('Invalid arguments.')
-    usage()
-    exit(1)
+parser.add_argument('--configuration', '-c',dest='cfgfile', required=False,
+        type=argparse.FileType('r'))
+parser.add_argument('--gphoto-log', '-g', dest='gphotolog', required=False,
+        type=argparse.FileType('a', 1))
+args = parser.parse_args()
 
 daemon_alive = True
 
 # Enable gph.
+if args.gphotolog:
+    print('Logging gphoto2 command to %s.' % args.gphotolog.name)
+    gph_debug_set(args.gphotolog)
+
 gph_open()
 
 # Print camera model cause we're happy.
@@ -78,8 +76,14 @@ signal.signal(signal.SIGTERM, daemon_end)
 cycle_reftime = monotonic_time()
 
 def sighup_handler(signum, frame):
+    if not args.cfgfile:
+        print('No configuration file to reload (received SIGHUP).')
+
     cv = cfgs['cycle']
-    cfg_load(cfgfile)
+
+    args.cfgfile.seek(0)
+    cfg_load(args.cfgfile)
+
     if cv != cfgs['cycle']:
         print('Cycle length changed, updating reftime.')
         cycle_reftime = monotonic_time()
@@ -88,7 +92,8 @@ def sighup_handler(signum, frame):
 # Reload conf signal
 signal.signal(signal.SIGHUP, sighup_handler)
 
-cfg_load(cfgfile)
+if args.cfgfile:
+    cfg_load(args.cfgfile)
 
 print(cfgs)
 

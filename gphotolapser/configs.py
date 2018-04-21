@@ -95,9 +95,14 @@ def cfg_write(f='timelapse.conf', signalservice=True):
     if signalservice == True:
         signal_trigger()
 
-def cfg_load(f='timelapse.conf'):
+def cfg_load(f='timelapse.conf', fp=None):
     config=SafeConfigParser()
-    config.read(f)
+
+    if not fp:
+        config.read(f)
+    else:
+        config.readfp(fp)
+
     #config.add_section('main')
     for c in cfgs:
         try:

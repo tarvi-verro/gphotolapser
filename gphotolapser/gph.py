@@ -2,6 +2,31 @@ import subprocess as sub
 from time import sleep, time
 from os import O_NONBLOCK, read, lseek, SEEK_END
 from fcntl import fcntl, F_GETFL, F_SETFL
+from datetime import datetime
+
+_debug_file=None
+
+def gph_debug_set(fh):
+    global _debug_file
+
+    if _debug_file != None:
+        _debug_file.close()
+
+    _debug_file = fh
+
+def gph_debug_open(fname):
+    global _debug_file
+
+    if _debug_file != None:
+        _debug_file.close()
+
+    _debug_file = open(fname, 'a', buffering=1)
+
+def _debug_write(inf):
+    if _debug_file == None or len(inf) == 0:
+        return
+    n=datetime.now().isoformat() + ': '
+    _debug_file.write(inf.replace('\n', '\n'+n))
 
 # Convinience function for shooting a picture with arbitary exposure
 def gph_shoot(exposure=1):
@@ -17,6 +42,7 @@ def gph_check_stderr():
     try:
         err = read(gph.stderr.fileno(), 1024)
         if len(err) != 0:
+            _debug_write(err)
             print('Gphoto2 printed to stderr:')
             print(err)
         True
@@ -40,6 +66,7 @@ def gph_open():
     while totslept < timeout:
         try:
             o = read(gph.stdout.fileno(), 10024)
+            _debug_write(o)
             if 'gphoto2:' == o[0:8]:
                 break
             print('Gphoto2 stdout not prompt:')
@@ -77,9 +104,11 @@ def gph_cmd(cmd, timeout=2):
     rubbish=''
     try:
         add=read(gph.stdout.fileno(), 1024)
+        _debug_write(add)
         while add != '':
             rubbish+=add
             add=read(gph.stdout.fileno(), 1024)
+            _debug_write(add)
     except OSError:
         pass
 
@@ -89,6 +118,8 @@ def gph_cmd(cmd, timeout=2):
 
     gph.stdin.write(cmd + '\n')
     gph.stdin.flush()
+    _debug_write(cmd + '\n')
+
     t_begin = time()
     t_wait = t_begin + float(timeout)
     t_wait_original = t_wait
@@ -101,7 +132,9 @@ def gph_cmd(cmd, timeout=2):
             answ_chk=len(answ) - 8
             if answ_chk < 0:
                 answ_chk = 0
-            answ+=read(gph.stdout.fileno(), 4192)
+            r=read(gph.stdout.fileno(), 4192)
+            _debug_write(answ)
+            answ+=r
         except OSError:
             t_now = time()
             if t_now > t_wait:
