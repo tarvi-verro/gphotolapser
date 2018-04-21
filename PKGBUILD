@@ -1,7 +1,7 @@
 
 # Maintainer: Your Name <youremail@domain.com>
 pkgname=gphotolapser
-pkgver=0.10
+pkgver=0.11
 pkgrel=1
 epoch=
 pkgdesc="Record a timelapse with a DSLR."
@@ -20,5 +20,7 @@ prepare() {
 
 package() {
         python2 setup.py install --root=$pkgdir/ --optimize=1
+	mkdir -p $pkgdir/etc/
+	python2 -c "import gphotolapser.configs as cfg; cfg.cfg_write(f='$pkgdir/etc/gphotolapser.conf', signalservice=False);"
 }
 
