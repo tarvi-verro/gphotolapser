@@ -7,6 +7,16 @@ from math import cos, pi
 def luminance_calculate(N, S, t, K=12.5):
     return N**2 * K / (t * S)
 
+# L -- luminance
+def shutter_calculate(L, N, S, K=12.5):
+    return N**2 * K / (L * S)
+
+def iso_calculate(L, N, t, K=12.5):
+    return N**2 * K / (t * L)
+
+def aperture_calculate(L, S, t, K=12.5):
+    return ((L * t * S) / K)**0.5
+
 # Estimate luminance based on sun position
 # Sundir is the azimuth relative to camera pointing direction
 def luminance_estimate(sunheight, sundir):
@@ -14,158 +24,97 @@ def luminance_estimate(sunheight, sundir):
     k = 4. / (2**(1. - cos(sundir*pi/360.)**16)) - 1.
     return j * k + 0.005
 
-def luminance_settings_get_bulb(target_lumi, given_aperture, given_iso,
-        shutter_min=(1./400.), shutter_max=30):
-    t_max = shutter_max
-    t_min = shutter_min
+# inp must be array of enumerated values.
+# Returns two closest candidates.
+def get_closest(tgt, inp):
+    if len(inp) == 1:
+        return (inp[0], inp[0])
 
-    offs=[]
+    fst=inp[0]
+    fst_d=abs(inp[0][1] - tgt)
 
-    # Binary search for optimum
-    for i in range(0, 60):
-        chunk=(t_max-t_min)/2.0
-        mid=t_min + chunk
-        a = mid - chunk/2.0
-        b = mid + chunk/2.0
-        a_off = abs(target_lumi - luminance_calculate(given_aperture, given_iso, a))
-        b_off = abs(target_lumi - luminance_calculate(given_aperture, given_iso, b))
-        if a_off < b_off:
-            t_max = mid
-            offs+=[a_off]
-        else:
-            t_min = mid
-            offs+=[b_off]
+    snd=None
+    snd_d=None
 
-        if offs[-1] < 1.0/4000.0:
-            break
+    for (indx, el) in inp[1:]:
+        d = abs(el - tgt)
+        if snd_d != None and d >= fst_d and d >= snd_d:
+            if fst_d < snd_d:
+                return (fst, snd)
+            else:
+                return (snd, fst)
 
-    #print(offs)
-    return (t_max+t_min)/2.0
+        snd_d = fst_d
+        snd = fst
+
+        fst_d = d
+        fst = (indx, el)
+
+    if fst_d < snd_d:
+        return (fst, snd)
+    else:
+        return (snd, fst)
+
 
 # Calculates best fit camera settings for given scene luminance
-def luminance_settings_get(target_lumi, aperture, iso, shutter, iso_max=800,
-        shutter_min=(1./400.), shutter_max=30):
-    # First get the brightest settings
-    t_aperture_brig=None
-    t_aperture_dark=None
-    t_iso_brig=None
-    t_iso_dark=None
-    t_shutter_brig=None
-    t_shutter_dark=None
+def luminance_settings_get(target_lumi, aperture_all, iso_all, shutter_all,
+        iso_max=800, shutter_min=(1./400.), shutter_max=30, bulb_min=5,
+        aperture_min=0.0):
 
-    # Ordered from brightest to darkest
-    for indx, e in enumerate(aperture):
-        if type(e) is not float:
-            continue
-        t_aperture_brig = (indx, e)
-        break
-    for indx, e in enumerate(aperture):
-        if type(e) is not float:
-            continue
-        t_aperture_dark = (indx, e)
+    # Pair up with indecies and sort from fastest to slowest
+    av_pairs = sorted(filter(
+        lambda p: type(p[1]) is float and p[1] >= aperture_min,
+        enumerate(aperture_all)
+        ), key = lambda p: p[1], reverse=True)
+    iso_pairs = sorted(filter(
+        lambda p: type(p[1]) is float and p[1] <= iso_max,
+        enumerate(iso_all)
+        ), key=lambda p: p[1])
+    shutter_pairs = sorted(filter(
+        lambda p: type(p[1]) is float and p[1] <= shutter_max and p[1] >= shutter_min,
+        enumerate(shutter_all)
+        ), key=lambda p: p[1])
 
-    # Ordered from darkest to brightest
-    for indx, e in enumerate(iso):
-        if type(e) is not float:
-            continue
-        if e > iso_max: # Max ISO
-            continue
-        t_iso_brig = (indx, e)
-    for indx, e in enumerate(iso):
-        if type(e) is not float:
-            continue
-        t_iso_dark = (indx, e)
-        break
+    # Get some special values
+    iso_auto = filter(
+            lambda p: type(p[1]) is str and p[1].lower() == 'auto',
+            enumerate(iso_all))
+    shutter_bulb = filter(
+            lambda p: type(p[1]) is str and p[1].lower() == 'bulb',
+            enumerate(shutter_all))
 
-    # Ordered from brightest to darkest
-    for indx, e in enumerate(shutter):
-        if type(e) is not float:
-            continue
-        if e > shutter_max:
-            continue
-        t_shutter_brig = (indx, e)
-        break
-    for indx, e in enumerate(shutter):
-        if type(e) is not float:
-            continue
-        if e < shutter_min:
-            continue
-        t_shutter_dark = (indx, e)
+    # Begin with the slowest
+    av = av_pairs[-1]
+    iso = iso_pairs[-1]
+    shutter = shutter_pairs[-1]
+    bulb = shutter_max
 
-    # To begin, we want to lower ISO.
-    if target_lumi < luminance_calculate(t_aperture_brig[1], t_iso_dark[1],
-            t_shutter_brig[1]):
-        first=None
-        a = t_aperture_brig
-        s = t_shutter_brig
-        # Find the best fit for ISO
-        for indx, e in enumerate(iso):
-            if type(e) is not float:
-                continue
-            if first == None:
-                first = indx
-            if e > iso_max:
-                break
-            # ISO list starts from darkest
-            l = luminance_calculate(a[1], e, s[1])
-            if target_lumi < l:
-                continue
-            # Perfect ISO is between [indx; indx-1]
-            if indx == first:
-                return (a[0], indx, s[0])
-            if luminance_calculate(a[1], iso[indx-1], s[1]) - target_lumi < target_lumi - l:
-                return (a[0], indx-1, s[0])
-            else:
-                return (a[0], indx, s[0])
-        return (a[0], t_iso_brig[0], s[0])
-    # Secondly we'd like to lower exposure times
-    elif target_lumi < luminance_calculate(t_aperture_brig[1],
-            t_iso_dark[1], t_shutter_dark[1]):
-        # Find the best fit for shutter
-        first=None
-        i = t_iso_dark
-        a = t_aperture_brig
-        for indx, e in enumerate(shutter):
-            if type(e) is not float:
-                continue
-            if first == None:
-                first = indx
-            # Shutter values start from brightest
-            if shutter_max < e or shutter_min > e:
-                continue
-            l = luminance_calculate(a[1], i[1], e)
-            if target_lumi > l:
-                continue
-            # Perfect exposure time between [indx; indx-1]
-            if indx == first:
-                return (a[0], i[0], indx)
-            if target_lumi - luminance_calculate(a[1], i[1], shutter[indx-1]) < l - target_lumi:
-                return (a[0], i[0], indx-1)
-            else:
-                return (a[0], i[0], indx)
-        return (a[0], i[0], t_shutter_brig[0])
-    # Lastly we'll start closing the aperture
-    else:
-        # Find the best fit aperture setting
-        first=None
-        i = t_iso_dark
-        s = t_shutter_dark
-        for indx, e in enumerate(aperture):
-            if type(e) is not float:
-                continue
-            if first == None:
-                first = indx
-            # Aperture values start from brightest
-            l = luminance_calculate(e, i[1], s[1])
-            if target_lumi > l:
-                continue
-            if indx==first:
-                return (indx, i[0], s[0])
-            if target_lumi - luminance_calculate(aperture[indx-1], i[1], s[1]) < l - target_lumi:
-                return (indx-1, i[0], s[0])
-            else:
-                return (indx, i[0], s[0])
-        return (t_aperture_dark[0], i[0], s[0])
+    # First see whether we can lower ISO
+    x = iso_calculate(target_lumi, av[1], shutter[1])
+    if x >= iso_max:
+        # Scene is too dark, return slowest settings
+        return (av[0], iso[0], shutter_bulb[0][0], shutter_max)
+    elif x <= iso_max and x >= iso_pairs[0][1]:
+        # In ISO range, refine using BULB
+        iso = max(get_closest(x, iso_pairs), key=lambda p: p[1])
+        bulb = min(shutter_max, shutter_calculate(target_lumi, av[1], iso[1]))
+        return (av[0], iso[0], shutter_bulb[0][0], bulb)
+    # Use the fastest ISO
+    iso = iso_pairs[0]
 
-    return (t_aperture_brig[0],t_iso_brig[0],t_shutter_brig[0])
+    # Second see whether limited shutter can put us in of the luminance
+    x = shutter_calculate(target_lumi, av[1], iso[1])
+    if x >= shutter_min:
+        if x >= bulb_min:
+            bulb = min(shutter_max, x)
+            return (av[0], iso[0], shutter_bulb[0][0], bulb)
+        (shutter, _) = get_closest(x, shutter_pairs)
+        return (av[0], iso[0], shutter[0], None)
+    # Use the fastest shutter
+    shutter = shutter_pairs[0]
+
+    # See how far aperture must be limited
+    x = aperture_calculate(target_lumi, iso[1], shutter[1])
+    (av, _) = get_closest(x, av_pairs)
+    return (av[0], iso[0], shutter[0], None)
 

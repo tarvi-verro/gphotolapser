@@ -9,7 +9,7 @@ from time import sleep
 from gph import gph_shoot, gph_open, gph_close, gph_cmd, gph_debug_set
 from math import pi, ceil
 from camera import camera_settings_get, camera_handler_get
-from luminance import luminance_settings_get, luminance_calculate, luminance_estimate, luminance_settings_get_bulb
+from luminance import luminance_settings_get, luminance_calculate, luminance_estimate
 from luminance_calculate import luminance_calculate
 from configs import cfgs, infs, cfg_load
 from monotonic_time import monotonic_time, monotonic_alarm
@@ -107,16 +107,13 @@ while daemon_alive:
 
     lumi_est=luminance_calculate('./')
 
-    (t_aperture, t_iso, t_shutter) = luminance_settings_get(lumi_est, aperture,
+    (t_aperture, t_iso, t_shutter, bulb) = luminance_settings_get(lumi_est, aperture,
             iso, shutter, iso_max=cfgs['iso_max'], shutter_max=cfgs['shutter_max'],
-            shutter_min=(float(cfgs['shutter_min_num'])/cfgs['shutter_min_denom']))
-
-    t_bulb = luminance_settings_get_bulb(lumi_est, aperture[t_aperture], iso[t_iso],
-            shutter_max=cfgs['shutter_max'],
-            shutter_min=(float(cfgs['shutter_min_num'])/cfgs['shutter_min_denom']))
+            shutter_min=(float(cfgs['shutter_min_num'])/cfgs['shutter_min_denom']),
+            bulb_min=5)
 
     print('est:{} (aperture:{}, iso:{}, shutter:{}, bulb:{})'.format(lumi_est,
-        aperture[t_aperture], iso[t_iso], shutter[t_shutter], t_bulb))
+        aperture[t_aperture], iso[t_iso], shutter[t_shutter], bulb))
 
     gph_cmd('set-config-index /main/capturesettings/aperture=%i' % t_aperture)
     gph_cmd('set-config-index /main/imgsettings/iso=%i' % t_iso)
@@ -128,11 +125,10 @@ while daemon_alive:
 
     monotonic_alarm(t + remain)
 
-    if t_bulb > 5.0:
-        gph_cmd('set-config-index /main/capturesettings/shutterspeed=0') # Bulb
+    if bulb != None:
         t = monotonic_time()
         gph_cmd(camera.bulb_begin)
-        monotonic_alarm(t + t_bulb)
+        monotonic_alarm(t + bulb)
         gph_cmd(camera.bulb_end)
         gph_cmd('wait-event-and-download %is' % 3,
                 timeout=(3.5)) # Should download the image
