@@ -49,6 +49,24 @@ cameramodel = model[3].split(' ', 1)[1]
 print('Camera: ' + cameramodel)
 camera = camera_handler_get(cameramodel)
 
+try:
+    sc=gph_cmd('get-config /main/status/shuttercounter')
+    print('Shutter counter: ' + sc[3].split(' ', 1)[1])
+
+    im=gph_cmd('get-config /main/imgsettings/imageformat')
+    print('Image format: ' + im[3].split(' ', 1)[1])
+
+    wb=gph_cmd('get-config /main/imgsettings/whitebalance')
+    print('White balance: ' + wb[3].split(' ', 1)[1])
+
+    ps=gph_cmd('get-config /main/capturesettings/picturestyle')
+    print('Picture style: ' + ps[3].split(' ', 1)[1])
+
+    cs=gph_cmd('get-config /main/imgsettings/colorspace')
+    print('Colour space: ' + cs[3].split(' ', 1)[1])
+except IndexError:
+    print("Couldn't retrieve some additional info from camera.")
+
 # Configure camera
 gph_cmd('set-config-index /main/settings/capturetarget=1')
 gph_cmd('set-config-index /main/capturesettings/autoexposuremode=3') # Dial Manual
@@ -115,6 +133,14 @@ while daemon_alive:
     print('est:{} (aperture:{}, iso:{}, shutter:{}, bulb:{})'.format(lumi_est,
         aperture[t_aperture], iso[t_iso], shutter[t_shutter], bulb))
 
+    # Get some status info from camera
+    try:
+        bat=gph_cmd('get-config /main/status/batterylevel')[3].split(' ', 1)[1]
+        print('battery: ' + bat)
+    except IndexError:
+        print("Couldn't retrieve battery information.")
+
+    # Configure the next frame
     gph_cmd('set-config-index /main/capturesettings/aperture=%i' % t_aperture)
     gph_cmd('set-config-index /main/imgsettings/iso=%i' % t_iso)
     # '1' sets to 1 second but '01' sets to 30 seconds (which is what we want)
