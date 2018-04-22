@@ -24,6 +24,10 @@ def luminance_estimate(sunheight, sundir):
     k = 4. / (2**(1. - cos(sundir*pi/360.)**16)) - 1.
     return j * k + 0.005
 
+
+def cmp(a,b):
+    return (a > b) - (a < b)
+
 # inp must be array of enumerated values.
 # Returns two closest candidates.
 def get_closest(tgt, inp):
@@ -31,29 +35,21 @@ def get_closest(tgt, inp):
         return (inp[0], inp[0])
 
     fst=inp[0]
-    fst_d=abs(inp[0][1] - tgt)
+    c=cmp(tgt, inp[0][1])
 
-    snd=None
-    snd_d=None
+    for snd in inp[1:]:
+        k = cmp(tgt, snd[1])
 
-    for (indx, el) in inp[1:]:
-        d = abs(el - tgt)
-        if snd_d != None and d >= fst_d and d >= snd_d:
-            if fst_d < snd_d:
-                return (fst, snd)
-            else:
+        if k != c:
+            if abs(fst[1] - tgt) > abs(snd[1] - tgt):
                 return (snd, fst)
+            else:
+                return (fst, snd)
 
-        snd_d = fst_d
-        snd = fst
+        fst = snd
 
-        fst_d = d
-        fst = (indx, el)
-
-    if fst_d < snd_d:
-        return (fst, snd)
-    else:
-        return (snd, fst)
+    # tgt doesn't lie between inputs' range
+    raise ValueError
 
 
 # Calculates best fit camera settings for given scene luminance
@@ -86,11 +82,11 @@ def luminance_settings_get(target_lumi, aperture_all, iso_all, shutter_all,
     # Begin with the slowest
     av = av_pairs[-1]
     iso = iso_pairs[-1]
-    shutter = shutter_pairs[-1]
+    shutter = shutter_bulb[0]
     bulb = shutter_max
 
     # First see whether we can lower ISO
-    x = iso_calculate(target_lumi, av[1], shutter[1])
+    x = iso_calculate(target_lumi, av[1], bulb)
     if x >= iso_max:
         # Scene is too dark, return slowest settings
         return (av[0], iso[0], shutter_bulb[0][0], shutter_max)
