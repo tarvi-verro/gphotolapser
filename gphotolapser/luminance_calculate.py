@@ -86,20 +86,20 @@ def luminance_calculate(imgd):
 
         lst.append(hist_corrected)
         lstF.append(f)
-        
+
         if len(lst) >= 3:
             break
 
     if len(lst) == 0:
-        return 10000
+        return 10000.0
 
-    ev = sum(lst) / float(len(lst))
+    ev = sum(lst) / len(lst)
 
     print('Files: {}'.format(lstF))
 
     #print('Averaging over: {}'.format(len(lst)))
 
-    return ev
+    return float(ev)
 
 #luminance_calculate('/srv/camera')
 
