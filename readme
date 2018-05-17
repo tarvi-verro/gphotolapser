@@ -5,6 +5,7 @@ Taking thousands of images in a timelapse with your DSLR camera will wear out
 the shutter mechanics of your camera, which is expensive as all hell to
 replace! Use at your own discretion.
 
+
 gphotolapser
 ============
 
@@ -15,6 +16,20 @@ include:
  - downloads the images after taking them
  - camera exposure, ISO speed and aperture based on scene brightness
  - uses gphoto2, so it should be easily portable to different cameras
+
+
+Usage
+-----
+
+The simplest way to quickly run this software in this repository is by calling
+executing the trigger.py file. Overview of options is displayed using the
+command:
+
+	gphotolapser/trigger.py --help
+
+To get a reference CFGFILE this command can be called from the root directory:
+
+	python2 -c "import gphotolapser.configs as cfg; cfg.cfg_write(f='gplapser.conf', signalservice=False);"
 
 
 Setup
