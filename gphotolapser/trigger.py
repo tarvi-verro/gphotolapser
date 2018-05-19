@@ -7,12 +7,12 @@ from os.path import isfile
 import signal
 from time import sleep
 from gph import gph_shoot, gph_open, gph_close, gph_cmd, gph_debug_set
-from math import pi, ceil
 from camera import camera_settings_get, camera_handler_get
 from luminance import luminance_settings_get, luminance_calculate, luminance_estimate
 from luminance_calculate import luminance_calculate
 from configs import cfgs, infs, cfg_load
-from monotonic_time import monotonic_time, monotonic_alarm
+from monotonic_time import monotonic_time
+from trigger_expose import trigger_capture, trigger_expose_bulb
 import argparse
 
 parser = argparse.ArgumentParser(description=('Start a timelapse with a '
@@ -149,17 +149,13 @@ while daemon_alive:
 
     sh=shutter[t_shutter]
 
-    monotonic_alarm(t + remain)
-
-    if bulb != None:
-        t = monotonic_time()
-        gph_cmd(camera.bulb_begin)
-        monotonic_alarm(t + bulb)
-        gph_cmd(camera.bulb_end)
-        gph_cmd('wait-event-and-download %is' % 3,
-                timeout=(3.5)) # Should download the image
-    else:
-        gph_cmd('capture-image-and-download', timeout=(ceil(sh) + 5.0))
+    try:
+        if bulb != None:
+            of = trigger_expose_bulb(camera, bulb, start_time = t + remain)
+        else:
+            of = trigger_capture(camera, sh, start_time = t + remain)
+    except IOError:
+        pass
 
 # Our job here is done
 gph_close()
