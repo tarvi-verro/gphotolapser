@@ -117,11 +117,6 @@ if args.cfgfile:
 
 print(cfgs)
 
-# The accuracy errors should be at most 10%
-bulb_min = 3
-bulb_lag = 0.1
-print("Bulb lag: {}, minimum bulb value: {}".format(bulb_lag, bulb_min))
-
 while daemon_alive:
     t = monotonic_time()
     ref_delta = (t - cycle_reftime) % cfgs['cycle']
@@ -132,7 +127,7 @@ while daemon_alive:
     (t_aperture, t_iso, t_shutter, bulb) = luminance_settings_get(lumi_est, aperture,
             iso, shutter, iso_max=cfgs['iso_max'], shutter_max=cfgs['shutter_max'],
             shutter_min=(float(cfgs['shutter_min_num'])/cfgs['shutter_min_denom']),
-            bulb_min=bulb_min)
+            bulb_min=cfgs['bulb_min'])
 
     print('est:{} (aperture:{}, iso:{}, shutter:{}, bulb:{})'.format(lumi_est,
         aperture[t_aperture], iso[t_iso], shutter[t_shutter], bulb))
@@ -157,9 +152,9 @@ while daemon_alive:
 
     try:
         if bulb != None:
-            meta.append(('BulbLag', bulb_lag))
-            of = trigger_expose_bulb(camera, bulb + bulb_lag, start_time = t + remain,
-                    meta=meta)
+            meta.append(('BulbLag', cfgs['bulb_lag']))
+            of = trigger_expose_bulb(camera, bulb + cfgs['bulb_lag'],
+                    start_time = t + remain, meta=meta)
         else:
             of = trigger_capture(camera, sh, start_time = t + remain,
                     meta=meta)

@@ -33,6 +33,14 @@ cfgs['shutter_min_denom']=400
 infs['shutter_min_denom']=(1, 5000, 1, 5000, 1,
         'Minimum shutter speed (denom)')
 
+cfgs['bulb_lag']=0.1
+infs['bulb_lag']=(0, 10, 0, 10, 0.05,
+        'Time the bulb trigger wastes not exposing.')
+
+cfgs['bulb_min']=3
+infs['bulb_min']=(0.05, 99999, 0.05, 99999, 0.5,
+        'Minimum shutter speed to control with bulb trigger.')
+
 
 def cfg_set(valz, signalservice=True):
     global cfgs
@@ -40,6 +48,8 @@ def cfg_set(valz, signalservice=True):
     shutter_max=cfgs['shutter_max']
     shutter_min_num=cfgs['shutter_min_num']
     shutter_min_denom=cfgs['shutter_min_denom']
+    bulb_lag=cfgs['bulb_lag']
+    bulb_min=cfgs['bulb_min']
 
     for v in valz:
         if v[0] not in cfgs:
@@ -56,6 +66,10 @@ def cfg_set(valz, signalservice=True):
             shutter_min_num=v[1]
         elif v[0] == 'shutter_min_denom':
             shutter_min_denom=v[1]
+        elif v[0] == 'bulb_lag':
+            bulb_lag=v[1]
+        elif v[0] == 'bulb_min':
+            bulb_min=v[1]
 
     # Check for some misconfigs.
     if cycle < shutter_max + 4: # 4 seconds to dl image
