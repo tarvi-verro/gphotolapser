@@ -7,7 +7,7 @@ def num(x):
     except ValueError:
         return float(x)
 
-cfgorder=['cycle', 'az', 'iso_max', 'shutter_max', 'shutter_min_num',
+cfgorder=['cycle', 'iso_max', 'shutter_max', 'shutter_min_num',
         'shutter_min_denom']
 
 cfgs={}
@@ -16,10 +16,6 @@ infs={} # (min_, max_, html_min, html_max, step, label)
 cfgs['cycle']=40
 infs['cycle']=(4, 60*60*1, 4, 60*60*1, 1, # 4secs to a day
         'Cycle duration (seconds)')
-
-cfgs['az']=60
-infs['az']=(0, 360, 0, 360, 1,
-        'Azimuth direction of camera (degrees)')
 
 cfgs['iso_max']=800
 infs['iso_max']=(100, 99999, 100, 99999, 100,
