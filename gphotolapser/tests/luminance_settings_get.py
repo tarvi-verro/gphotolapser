@@ -2,6 +2,8 @@
 #   python2 -m gphotolapser.tests.luminance_settings_get
 
 from ..luminance import luminance_settings_get, luminance_calculate
+import matplotlib.pyplot as plt
+from math import log
 
 # Canon 550D values
 class Canon_550D:
@@ -55,6 +57,36 @@ def check_monotonical_growth(sets, r):
 
     return success
 
+def plot_ev_offsets(sets, r):
+
+    ax_x=[]
+    ax_y=[]
+
+    for i in r:
+        # Values for previous step
+        (av_i, iso_i, shutter_i, bulb) = luminance_settings_get(i,
+                sets.aperture, sets.iso, sets.shutter,
+                iso_max=1600, bulb_min=3, shutter_min=(1/1000.),
+                warning=False)
+        shutter = bulb
+        if bulb == None:
+            shutter = sets.shutter[shutter_i]
+        lumi = luminance_calculate(sets.aperture[av_i], sets.iso[iso_i],
+                shutter)
+
+        diff = log(i)/log(2) - log(lumi)/log(2)
+        ax_x.append(i)
+        ax_y.append(diff)
+
+    plt.title('luminance_settings_get EV offsets')
+    plt.ylabel('EV units / stops')
+    plt.xlabel('Luminance')
+    plt.xscale('log', basex=2)
+    plt.grid()
+    plt.plot(ax_x, ax_y)
+    plt.show()
+
+
 # Values to check for
 r_sca = 100;
 r = [ 2**(x/float(r_sca)) for x in range(-9*r_sca, int(round(16.5*r_sca))) ]
@@ -64,4 +96,6 @@ if not check_monotonical_growth(sets, r):
     print('MONOTONICAL GROWTH TEST FAILED.')
 else:
     print('Monotonical growth check succeeded.')
+
+plot_ev_offsets(sets, r)
 
