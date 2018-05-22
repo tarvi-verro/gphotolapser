@@ -105,6 +105,9 @@ def luminance_settings_get(target_lumi, aperture_all, iso_all, shutter_all,
             bulb = min(shutter_max, x)
             return (av[0], iso[0], shutter_bulb[0][0], bulb)
         (shutter, _) = get_closest(x, shutter_pairs)
+        # But maybe bulb_min is closer
+        if abs(x - shutter[1]) > abs(x - bulb_min):
+            return (av[0], iso[0], shutter_bulb[0][0], bulb_min)
         return (av[0], iso[0], shutter[0], None)
     # Use the fastest shutter
     shutter = shutter_pairs[0]
