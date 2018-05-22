@@ -153,11 +153,16 @@ while daemon_alive:
 
     sh=shutter[t_shutter]
 
+    meta=[('LuminanceTarget', lumi_est)]
+
     try:
         if bulb != None:
-            of = trigger_expose_bulb(camera, bulb + bulb_lag, start_time = t + remain)
+            meta.append(('BulbLag', bulb_lag))
+            of = trigger_expose_bulb(camera, bulb + bulb_lag, start_time = t + remain,
+                    meta=meta)
         else:
-            of = trigger_capture(camera, sh, start_time = t + remain)
+            of = trigger_capture(camera, sh, start_time = t + remain,
+                    meta=meta)
     except IOError:
         pass
 

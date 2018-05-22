@@ -5,7 +5,8 @@ from monotonic_time import monotonic_time, monotonic_alarm
 
 _saving_file_response = 'Saving file as '
 
-def trigger_capture(camera, shutter, start_time = (monotonic_time() + 0.05)):
+def trigger_capture(camera, shutter, start_time = (monotonic_time() + 0.05),
+        meta=[]):
     monotonic_alarm(start_time)
     o = gph_cmd('capture-image-and-download', timeout=(ceil(shutter) + 5.0))
 
@@ -20,13 +21,16 @@ def trigger_capture(camera, shutter, start_time = (monotonic_time() + 0.05)):
     exifd.read()
 
     # Add a piece of debug info to exif header
-    tag='Xmp.xmp.GPhotolapser.TriggerStartTime'
-    exifd[tag] = XmpTag(tag, value=str(start_time))
+    meta.append(('TriggerStartTime', start_time))
+    for (name, value) in meta:
+        tag = 'Xmp.xmp.GPhotolapser.' + name
+        exifd[tag] = XmpTag(tag, value=str(value))
     exifd.write();
 
     return filename
 
-def trigger_expose_bulb(camera, bulb, start_time = (monotonic_time() + 0.05)):
+def trigger_expose_bulb(camera, bulb, start_time = (monotonic_time() + 0.05),
+        meta=[]):
     end_time = start_time + bulb
 
     monotonic_alarm(start_time)
@@ -49,10 +53,11 @@ def trigger_expose_bulb(camera, bulb, start_time = (monotonic_time() + 0.05)):
     exifd.read()
 
     # Add a piece of debug info to exif header
-    tag='Xmp.xmp.GPhotolapser.BulbHoldTime'
-    exifd[tag] = XmpTag(tag, value=str(bulb))
-    tag='Xmp.xmp.GPhotolapser.TriggerStartTime'
-    exifd[tag] = XmpTag(tag, value=str(start_time))
+    meta.append(('BulbHoldTime', bulb))
+    meta.append(('TriggerStartTime', start_time))
+    for (name, value) in meta:
+        tag = 'Xmp.xmp.GPhotolapser.' + name
+        exifd[tag] = XmpTag(tag, value=str(value))
     exifd.write();
 
     return filename
