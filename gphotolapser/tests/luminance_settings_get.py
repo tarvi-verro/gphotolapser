@@ -24,7 +24,8 @@ def check_monotonical_growth(sets, r):
         # Values for previous step
         (p_av_i, p_iso_i, p_shutter_i, p_bulb) = luminance_settings_get(r[i-1],
                 sets.aperture, sets.iso, sets.shutter,
-                iso_max=1600, bulb_min=3, shutter_min=(1/1000.))
+                iso_max=1600, bulb_min=3, shutter_min=(1/1000.),
+                warning=False)
         p_shutter = p_bulb
         if p_bulb == None:
             p_shutter = sets.shutter[p_shutter_i]
@@ -34,7 +35,8 @@ def check_monotonical_growth(sets, r):
         # Values for current step
         (c_av_i, c_iso_i, c_shutter_i, c_bulb) = luminance_settings_get(r[i],
                 sets.aperture, sets.iso, sets.shutter,
-                iso_max=1600, bulb_min=3, shutter_min=(1/1000.))
+                iso_max=1600, bulb_min=3, shutter_min=(1/1000.),
+                warning=False)
         c_shutter = c_bulb
         if c_bulb == None:
             c_shutter = sets.shutter[c_shutter_i]
@@ -54,9 +56,10 @@ def check_monotonical_growth(sets, r):
     return success
 
 # Values to check for
-r_scaler = 100;
-r = [ 2**(x/float(r_scaler)) for x in range(-8*r_scaler, 15*r_scaler, 1) ]
+r_sca = 100;
+r = [ 2**(x/float(r_sca)) for x in range(-9*r_sca, int(round(16.5*r_sca))) ]
 sets = Canon_550D
+
 if not check_monotonical_growth(sets, r):
     print('MONOTONICAL GROWTH TEST FAILED.')
 else:

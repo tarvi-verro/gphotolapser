@@ -55,7 +55,7 @@ def get_closest(tgt, inp):
 # Calculates best fit camera settings for given scene luminance
 def luminance_settings_get(target_lumi, aperture_all, iso_all, shutter_all,
         iso_max=800, shutter_min=(1./400.), shutter_max=30, bulb_min=5,
-        aperture_min=0.0):
+        aperture_min=0.0,warning=True):
 
     # Pair up with indecies and sort from fastest to slowest
     av_pairs = sorted(filter(
@@ -114,6 +114,12 @@ def luminance_settings_get(target_lumi, aperture_all, iso_all, shutter_all,
 
     # See how far aperture must be limited
     x = aperture_calculate(target_lumi, iso[1], shutter[1])
-    (av, _) = get_closest(x, av_pairs)
+    av = av_pairs[0] # Fallback uses fastest AV
+    try:
+        (_av, _) = get_closest(x, av_pairs)
+        av = _av
+    except ValueError:
+        if warning: print('Warning! Scene too bright.')
+
     return (av[0], iso[0], shutter[0], None)
 
