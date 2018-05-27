@@ -21,7 +21,7 @@ include:
 Usage
 -----
 
-The simplest way to quickly run this software in this repository is by calling
+The simplest way to quickly run this software in this repository is by
 executing the trigger.py file. Overview of options is displayed using the
 command:
 
@@ -31,9 +31,13 @@ To get a reference CFGFILE this command can be called from the root directory:
 
 	python2 -c "import gphotolapser.configs as cfg; cfg.cfg_write(f='gplapser.conf', signalservice=False);"
 
+Connect your DSLR camera with USB and start the trigger. The first captured
+image should be taken in 5 seconds and downloaded to the working directory
+shortly.
 
-Setup
-=====
+
+Practical Setup for Nature Photography
+======================================
 
 Note that the setup to shoot long timelapses in remote locations can get heavy
 as you need to provide power for your equipment.

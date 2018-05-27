@@ -92,8 +92,10 @@ def daemon_end(signum, frame):
 signal.signal(signal.SIGTERM, daemon_end)
 
 
-# Reference time for precise cycles
-cycle_reftime = monotonic_time()
+# Reference time for precise cycles. The offset of '+ 5' makes sure that the
+# beginning of the first cycle starts sooner than cfgs['cycle'] seconds.
+#
+cycle_reftime = monotonic_time() + 5
 
 def sighup_handler(signum, frame):
     if not args.cfgfile:
