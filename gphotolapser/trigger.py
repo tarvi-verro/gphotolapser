@@ -10,7 +10,7 @@ from gph import gph_shoot, gph_open, gph_close, gph_cmd, gph_debug_set
 from camera import camera_settings_get, camera_handler_get
 from luminance import luminance_settings_get, luminance_calculate, luminance_estimate
 from luminance_calculate import luminance_calculate
-from configs import cfgs, infs, cfg_load
+from configs import cfgs, infs, cfg_load, cfg_write
 from monotonic_time import monotonic_time
 from trigger_expose import trigger_capture, trigger_expose_bulb
 import argparse
@@ -22,9 +22,18 @@ parser.add_argument('--configuration', '-c',dest='cfgfile', required=False,
         type=argparse.FileType('r'))
 parser.add_argument('--gphoto-log', '-g', dest='gphotolog', required=False,
         type=argparse.FileType('a', 1))
+parser.add_argument('--configuration-template', '-t', action='store_true', dest='template',
+        required=False, help='create configuration template timelapse.conf '
+        + 'and exit')
 args = parser.parse_args()
 
 daemon_alive = True
+
+# Export the template
+if args.template:
+    cfg_write(f='timelapse.conf', signalservice=False);
+    print('Exported configuration template \'timelapse.conf\'.');
+    exit(0)
 
 # Enable gph.
 if args.gphotolog:

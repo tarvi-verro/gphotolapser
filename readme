@@ -27,9 +27,10 @@ command:
 
 	gphotolapser/trigger.py --help
 
-To get a reference CFGFILE this command can be called from the root directory:
+To get a reference configuration file 'timelapse.conf', use the flag -t:
 
-	python2 -c "import gphotolapser.configs as cfg; cfg.cfg_write(f='gplapser.conf', signalservice=False);"
+	gphotolapser/trigger.py -t
+
 
 Connect your DSLR camera with USB and start the trigger. The first captured
 image should be taken in 5 seconds and downloaded to the working directory
