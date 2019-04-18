@@ -1,14 +1,14 @@
 from gph import gph_cmd
 from pyexiv2 import ImageMetadata, XmpTag
-from math import ceil
+from math import floor
 from monotonic_time import monotonic_time, monotonic_alarm
 
 _saving_file_response = 'Saving file as '
 
 def trigger_capture(camera, shutter, start_time = (monotonic_time() + 0.05),
-        meta=[]):
+        meta=[], download_timeout=5.0):
     monotonic_alarm(start_time)
-    o = gph_cmd('capture-image-and-download', timeout=(ceil(shutter) + 5.0))
+    o = gph_cmd('capture-image-and-download', timeout=shutter + download_timeout)
 
     s = filter(lambda x: x.startswith(_saving_file_response), o)
     if len(s) != 1:
@@ -30,7 +30,7 @@ def trigger_capture(camera, shutter, start_time = (monotonic_time() + 0.05),
     return filename
 
 def trigger_expose_bulb(camera, bulb, start_time = (monotonic_time() + 0.05),
-        meta=[]):
+        meta=[], download_timeout=3.5):
     end_time = start_time + bulb
 
     monotonic_alarm(start_time)
@@ -39,8 +39,8 @@ def trigger_expose_bulb(camera, bulb, start_time = (monotonic_time() + 0.05),
     monotonic_alarm(end_time)
     gph_cmd(camera.bulb_end)
 
-    o = gph_cmd('wait-event-and-download %is' % 3,
-            timeout=(3.5)) # Should download the image
+    o = gph_cmd('wait-event-and-download %is' % int(floor(download_timeout)),
+            timeout=download_timeout) # Should download the image
 
     s = filter(lambda x: x.startswith(_saving_file_response), o)
     if len(s) != 1:

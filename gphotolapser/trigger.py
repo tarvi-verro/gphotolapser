@@ -13,6 +13,7 @@ from luminance_calculate import luminance_calculate
 from configs import cfgs, infs, cfg_load, cfg_write
 from monotonic_time import monotonic_time
 from trigger_expose import trigger_capture, trigger_expose_bulb
+from math import floor
 import argparse
 
 parser = argparse.ArgumentParser(description=('Start a timelapse with a '
@@ -128,6 +129,20 @@ if args.cfgfile:
 
 print(cfgs)
 
+def expose(start_time, meta, bulb):
+    try:
+        if bulb != None:
+            meta.append(('BulbLag', cfgs['bulb_lag']))
+            of = trigger_expose_bulb(camera, bulb + cfgs['bulb_lag'],
+                    start_time = start_time, meta=meta,
+                    download_timeout=cfgs['download_timeout'])
+        else:
+            of = trigger_capture(camera, sh, start_time = start_time,
+                    meta=meta, download_timeout=cfgs['download_timeout'])
+    except IOError:
+        pass
+
+
 while daemon_alive:
     t = monotonic_time()
     ref_delta = (t - cycle_reftime) % cfgs['cycle']
@@ -140,13 +155,11 @@ while daemon_alive:
             shutter_min=(float(cfgs['shutter_min_num'])/cfgs['shutter_min_denom']),
             bulb_min=cfgs['bulb_min'])
 
-    print('est:{} (aperture:{}, iso:{}, shutter:{}, bulb:{})'.format(lumi_est,
-        aperture[t_aperture], iso[t_iso], shutter[t_shutter], bulb))
-
     # Get some status info from camera
+    status=''
     try:
         bat=gph_cmd('get-config /main/status/batterylevel')[3].split(' ', 1)[1]
-        print('battery: ' + bat)
+        status += ' battery: ' + bat
     except IndexError:
         print("Couldn't retrieve battery information.")
 
@@ -159,18 +172,35 @@ while daemon_alive:
 
     sh=shutter[t_shutter]
 
-    meta=[('LuminanceTarget', lumi_est)]
+    meta=[('LuminanceTarget', lumi_est), ('CycleRefTime', cycle_reftime)]
 
-    try:
-        if bulb != None:
-            meta.append(('BulbLag', cfgs['bulb_lag']))
-            of = trigger_expose_bulb(camera, bulb + cfgs['bulb_lag'],
-                    start_time = t + remain, meta=meta)
-        else:
-            of = trigger_capture(camera, sh, start_time = t + remain,
-                    meta=meta)
-    except IOError:
-        pass
+    # Calculate number of extras
+    shutter_speed = sh
+    if bulb != None:
+        shutter_speed = bulb + cfgs['bulb_lag']
+
+    t_capture = shutter_speed + cfgs['download_timeout']
+    extras_possible = max(0, int(floor(cfgs['cycle'] / t_capture)) - 1)
+    extras = min(cfgs['extras_per_cycle'], extras_possible)
+    n = extras + 1
+
+    # Print info about frame to be taken
+    print('est:{} (aperture:{}, iso:{}, shutter:{}, bulb:{}, n:{}),{}'.format(lumi_est,
+        aperture[t_aperture], iso[t_iso], shutter[t_shutter], bulb, n,
+        status))
+
+    # Take the picture(s)
+    cycle_start = t + remain
+    last_frame = cycle_start + cfgs['cycle'] / n * extras
+    t = monotonic_time()
+
+    while t < last_frame:
+        frame_ref_delta = (t - cycle_start) % (cfgs['cycle'] / n)
+        frame_remain = cfgs['cycle'] / n - frame_ref_delta
+        frame_start = t + frame_remain
+
+        expose(frame_start, meta, bulb)
+        t = monotonic_time()
 
 # Our job here is done
 gph_close()

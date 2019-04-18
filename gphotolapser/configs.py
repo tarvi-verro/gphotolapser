@@ -41,6 +41,14 @@ cfgs['bulb_min']=3
 infs['bulb_min']=(0.05, 99999, 0.05, 99999, 0.5,
         'Minimum shutter speed to control with bulb trigger.')
 
+cfgs['extras_per_cycle']=0
+infs['extras_per_cycle']=(0, 10, 0, 10, 1,
+        'Number of extra same-setting pictures to take per cycle.')
+
+cfgs['download_timeout']=3
+infs['download_timeout']=(1, 30, 1, 30, 0.5,
+        'Maximum time to wait for the taken image to finish downloading.')
+
 
 def cfg_set(valz, signalservice=True):
     global cfgs
