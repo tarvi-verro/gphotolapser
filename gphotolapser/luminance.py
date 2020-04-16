@@ -48,8 +48,8 @@ def get_closest(tgt, inp):
 
         fst = snd
 
-    # tgt doesn't lie between inputs' range
-    raise ValueError
+    print("Error: tgt doesn't lie between inputs' range")
+    return (inp[-1], inp[-2])
 
 
 # Calculates best fit camera settings for given scene luminance
