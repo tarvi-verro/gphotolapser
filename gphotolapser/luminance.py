@@ -71,6 +71,9 @@ def luminance_settings_get(target_lumi, aperture_all, iso_all, shutter_all,
         enumerate(shutter_all)
         ), key=lambda p: p[1])
 
+    # Clip shutter_min value to what's available
+    shutter_min = max(shutter_min, shutter_pairs[0][1])
+
     # Get some special values
     iso_auto = filter(
             lambda p: type(p[1]) is str and p[1].lower() == 'auto',
